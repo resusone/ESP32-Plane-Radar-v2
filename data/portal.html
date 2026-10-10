@@ -1,0 +1,485 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>Plane Radar</title>
+<style>
+:root{
+  --bg:#070d18;--card:#0f1828;--line:#1f2c42;--field:#0a1220;
+  --text:#e8eef7;--dim:#93a3ba;--green:#46e178;--amber:#ffbe28;--red:#ff6652;--blue:#5ac8ff;
+  --radius:14px;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--text);
+  font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:0 16px 96px}
+main{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+header{max-width:560px;margin:0 auto;padding:18px 0 14px;display:flex;align-items:center;gap:12px}
+header svg{flex:none}
+h1{font-size:20px;margin:0;line-height:1.2}
+header p{margin:0;color:var(--dim);font-size:13px}
+.chip{margin-left:auto;font-size:12px;font-weight:600;padding:5px 10px;border-radius:99px;
+  border:1px solid var(--line);color:var(--dim);white-space:nowrap}
+.chip.ok{color:var(--green);border-color:#1e5a36}
+.chip.warn{color:var(--amber);border-color:#6b5318}
+.chip.bad{color:var(--red);border-color:#6a2a22}
+section{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px}
+h2{font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);margin:0 0 12px;font-weight:600}
+p{margin:0 0 10px}
+.hint{color:var(--dim);font-size:13.5px}
+.verdict{border-left:4px solid var(--line);padding:2px 0 2px 12px;margin:0}
+.verdict b{display:block;font-size:17px;margin-bottom:2px}
+.verdict.ok{border-color:var(--green)}
+.verdict.warn{border-color:var(--amber)}
+.verdict.bad{border-color:var(--red)}
+.verdict span{color:var(--dim);font-size:14.5px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:14px 0 4px}
+.stat{background:var(--field);border-radius:10px;padding:9px 6px;text-align:center;min-width:0}
+.stat b{display:block;font-size:19px;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stat small{color:var(--dim);font-size:11.5px}
+table{width:100%;border-collapse:collapse;font-size:14px;font-variant-numeric:tabular-nums;margin-top:10px}
+th{color:var(--dim);font-weight:500;font-size:12px;text-align:left;padding:4px 6px 6px 0}
+td{padding:6px 6px 6px 0;border-top:1px solid var(--line);white-space:nowrap}
+th.r,td.r{text-align:right;padding-right:0}
+td.cs{font-weight:600}
+td.ty{color:var(--amber)}
+td.al{color:var(--blue)}
+details{margin-top:12px;font-size:13.5px;color:var(--dim)}
+summary{cursor:pointer;padding:6px 0}
+dl{display:grid;grid-template-columns:auto 1fr;gap:3px 14px;margin:6px 0 0}
+dt{color:var(--dim)}dd{margin:0;color:var(--text);overflow-wrap:anywhere}
+label{display:block;font-size:13.5px;color:var(--dim);margin:12px 0 5px}
+label:first-child{margin-top:0}
+input[type=text],input[type=password],input[type=search],select{
+  width:100%;background:var(--field);color:var(--text);border:1px solid var(--line);
+  border-radius:10px;padding:11px 12px;font:inherit;min-height:46px}
+input:focus-visible,select:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.row{display:flex;gap:10px}
+.row>*{flex:1;min-width:0}
+button{font:inherit;font-weight:600;border-radius:10px;border:1px solid var(--line);
+  background:#172338;color:var(--text);padding:11px 14px;min-height:46px;cursor:pointer}
+button:hover{background:#1d2d47}
+button.primary{background:var(--green);border-color:var(--green);color:#04210f}
+button.primary:hover{background:#63ec90}
+button.danger{color:var(--red)}
+button.armed{background:var(--red);border-color:var(--red);color:#2a0600}
+button:disabled{opacity:.5;cursor:default}
+.wide{width:100%}
+.nets{list-style:none;margin:10px 0 0;padding:0;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.nets:empty{display:none}
+.nets button{display:flex;width:100%;align-items:center;gap:10px;border:0;border-radius:0;
+  border-top:1px solid var(--line);background:var(--field);text-align:left;font-weight:500}
+.nets li:first-child button{border-top:0}
+.nets button[aria-pressed=true]{background:#14304a}
+.nets .name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nets small{color:var(--dim);font-weight:400}
+.bars{display:inline-flex;align-items:flex-end;gap:2px;height:14px}
+.bars i{width:3px;background:var(--line);border-radius:1px}
+.bars i.on{background:var(--green)}
+.bars i:nth-child(1){height:4px}.bars i:nth-child(2){height:7px}
+.bars i:nth-child(3){height:10px}.bars i:nth-child(4){height:14px}
+.check{display:flex;align-items:flex-start;gap:12px;padding:11px 0;border-top:1px solid var(--line);margin:0;color:var(--text);font-size:15.5px;cursor:pointer}
+.check input{width:22px;height:22px;margin:1px 0 0;accent-color:var(--green);flex:none}
+.check small{display:block;color:var(--dim);font-size:13px}
+.checks{margin-top:14px}
+.msg{font-size:14px;margin:10px 0 0;min-height:1px}
+.msg:empty{display:none}
+.msg.ok{color:var(--green)}.msg.bad{color:var(--red)}.msg.info{color:var(--dim)}
+.places{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
+.places button{width:100%;text-align:left;font-weight:500}
+.places small{display:block;color:var(--dim);font-weight:400}
+#savebar{position:fixed;left:0;right:0;bottom:0;background:rgba(7,13,24,.94);
+  border-top:1px solid var(--line);padding:12px 16px calc(12px + env(safe-area-inset-bottom));
+  transform:translateY(110%);transition:transform .18s}
+#savebar.show{transform:none}
+#savebar div{max-width:560px;margin:0 auto;display:flex;gap:10px;align-items:center}
+#savebar span{flex:1;font-size:14px;color:var(--dim)}
+body.portal #live{display:none}
+body.portal #wifi{order:-1}
+[hidden]{display:none!important}
+@media (max-width:380px){.stats{grid-template-columns:repeat(2,1fr)}}
+@media (prefers-reduced-motion:reduce){#savebar{transition:none}}
+</style>
+</head>
+<body>
+<header>
+  <svg width="38" height="38" viewBox="0 0 38 38" aria-hidden="true">
+    <circle cx="19" cy="19" r="17.5" fill="none" stroke="#1e6a36" stroke-width="2"/>
+    <circle cx="19" cy="19" r="10.5" fill="none" stroke="#1e6a36" stroke-width="1.5"/>
+    <path d="M19 19 30 8" stroke="#46e178" stroke-width="2" stroke-linecap="round"/>
+    <circle cx="12" cy="13" r="2.6" fill="#ff6652"/><circle cx="19" cy="19" r="1.8" fill="#fff"/>
+  </svg>
+  <div><h1>Plane Radar</h1><p id="sub">Connecting to the radar…</p></div>
+  <span class="chip" id="chip">…</span>
+</header>
+
+<main>
+<section id="live" aria-labelledby="h-live">
+  <h2 id="h-live">Right now</h2>
+  <p class="verdict" id="verdict"><b>Checking…</b><span></span></p>
+  <div class="stats">
+    <div class="stat"><b id="s-count">–</b><small>aircraft</small></div>
+    <div class="stat"><b id="s-near">–</b><small>nearest</small></div>
+    <div class="stat"><b id="s-age">–</b><small>last update</small></div>
+    <div class="stat"><b id="s-rssi">–</b><small>Wi-Fi signal</small></div>
+  </div>
+  <table id="planes" hidden>
+    <thead><tr><th>Flight</th><th>Type</th><th>Altitude</th><th class="r">Distance</th><th class="r">Bearing</th></tr></thead>
+    <tbody></tbody>
+  </table>
+  <p class="hint" id="more" hidden></p>
+  <details>
+    <summary>Connection details</summary>
+    <dl id="diag"></dl>
+  </details>
+</section>
+
+<section id="wifi" aria-labelledby="h-wifi">
+  <h2 id="h-wifi">Wi-Fi</h2>
+  <p id="wifi-now" class="hint"></p>
+  <button type="button" class="wide" id="scan">Find networks</button>
+  <ul class="nets" id="nets"></ul>
+  <form id="wifi-form" autocomplete="off" style="margin-top:14px">
+    <label for="ssid">Network name</label>
+    <input type="text" id="ssid" maxlength="32" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="Pick one above, or type it">
+    <label for="pass">Password</label>
+    <input type="password" id="pass" maxlength="63" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="Leave empty for an open network">
+    <label class="check" style="border:0;padding:8px 0 12px"><input type="checkbox" id="showpass"><span>Show password</span></label>
+    <button type="submit" class="primary wide" id="join">Connect</button>
+    <p class="msg" id="wifi-msg" role="status"></p>
+  </form>
+</section>
+
+<section id="place" aria-labelledby="h-place">
+  <h2 id="h-place">Your location</h2>
+  <p class="hint" id="loc-note">The radar is centred on this spot. A suburb-level position is plenty.</p>
+  <div class="row">
+    <div><label for="lat">Latitude</label><input type="text" id="lat" inputmode="text" placeholder="52.3676"></div>
+    <div><label for="lon">Longitude</label><input type="text" id="lon" inputmode="text" placeholder="4.9041"></div>
+  </div>
+  <p class="hint" style="margin-top:8px">South and west are negative. You can paste both numbers at once, e.g. from a maps app.</p>
+  <label for="q">Or look up a town or suburb</label>
+  <form class="row" id="search-form">
+    <input type="search" id="q" placeholder="e.g. Haarlem" style="flex:2">
+    <button type="submit" id="search">Search</button>
+  </form>
+  <ul class="places" id="places"></ul>
+  <button type="button" class="wide" id="locate" style="margin-top:10px">Estimate from my internet address</button>
+  <p class="msg" id="loc-msg" role="status"></p>
+</section>
+
+<section id="display" aria-labelledby="h-display">
+  <h2 id="h-display">Radar display</h2>
+  <label for="range">Range</label>
+  <select id="range"></select>
+  <p class="hint" style="margin-top:6px">A short tap on the BOOT button steps through these too.</p>
+  <div class="row">
+    <div><label for="units">Distances in</label>
+      <select id="units"><option value="0">Kilometres</option><option value="1">Miles</option></select></div>
+    <div><label for="labels">Aircraft labels</label><select id="labels"></select></div>
+  </div>
+  <label for="wifipower">Wi-Fi transmit power</label>
+  <select id="wifipower">
+    <option value="0">Automatic (louder when the signal is weak)</option>
+    <option value="1">Always low (8.5 dBm)</option>
+    <option value="2">Always high (17 dBm)</option>
+  </select>
+  <label for="source">Aircraft data from</label>
+  <select id="source">
+    <option value="0">Automatic (switches if one stops answering)</option>
+    <option value="1">adsb.fi only</option>
+    <option value="2">adsb.lol only</option>
+  </select>
+  <div class="checks">
+    <label class="check"><input type="checkbox" id="runways"><span>Show airport runways<small>Major airports inside the range</small></span></label>
+    <label class="check"><input type="checkbox" id="ground"><span>Show aircraft on the ground<small>Taxiing and parked aircraft near an airport</small></span></label>
+    <label class="check"><input type="checkbox" id="swap"><span>Swap red and blue<small>Change this if aircraft look blue instead of red</small></span></label>
+  </div>
+</section>
+
+<section id="device" aria-labelledby="h-device">
+  <h2 id="h-device">Device</h2>
+  <p class="hint" id="dev-info"></p>
+  <div class="row">
+    <button type="button" id="restart">Restart</button>
+    <button type="button" class="danger" id="erase">Erase everything</button>
+  </div>
+  <p class="msg" id="dev-msg" role="status"></p>
+</section>
+</main>
+
+<div id="savebar" role="region" aria-label="Unsaved changes">
+  <div><span id="save-msg">You have unsaved changes</span>
+  <button type="button" id="discard">Discard</button>
+  <button type="button" class="primary" id="save">Save</button></div>
+</div>
+
+<script>
+(function(){
+"use strict";
+var $=function(id){return document.getElementById(id)};
+var status=null, settings=null, dirty=false, locApprox=false, gone=0, pollTimer=0, scanTimer=0;
+var KM_PER_MI=1.609344, COVER=4/3*118/107;   // ring-3 distance -> edge of the screen
+
+function api(path,body){
+  var opt={method:body?"POST":"GET",cache:"no-store"};
+  if(body){opt.headers={"Content-Type":"application/x-www-form-urlencoded"};opt.body=new URLSearchParams(body).toString()}
+  var ctl=window.AbortController?new AbortController():null;
+  if(ctl){opt.signal=ctl.signal;setTimeout(function(){ctl.abort()},9000)}
+  return fetch(path,opt).then(function(r){
+    return r.json().catch(function(){return {}}).then(function(j){
+      if(!r.ok){throw new Error(j.error||("The radar answered with an error ("+r.status+")."))}
+      return j})})
+}
+function text(el,t){el.textContent=t}
+function msg(id,kind,t){var el=$(id);el.className="msg "+(kind||"");text(el,t||"")}
+function miles(){return settings&&settings.miles}
+function dist(km,digits){
+  if(km==null||km<0)return "–";
+  var v=miles()?km/KM_PER_MI:km;
+  return (v<10&&digits!==0?v.toFixed(1):Math.round(v))+(miles()?" mi":" km")
+}
+function compass(deg){return ["N","NE","E","SE","S","SW","W","NW"][Math.round(deg/45)%8]}
+function ago(s){
+  if(s==null||s<0)return "never";
+  if(s<90)return s+" s ago";
+  if(s<5400)return Math.round(s/60)+" min ago";
+  return Math.round(s/3600)+" h ago"
+}
+function coverKm(){var s=settings;return s?s.ranges_km[s.range]*COVER:0}
+
+/* ---------- live status ---------- */
+function verdict(st){
+  var f=st.feed,l=st.loc,r=dist(f.radius_km,0);
+  if(!st.online)return ["bad","Not on Wi-Fi","The radar has lost its connection"+(st.saved_ssid?" to "+st.saved_ssid:"")+" and is trying to rejoin."];
+  if(!f.attempted)return ["warn","Waiting for the first update","The radar asks for aircraft every few seconds."];
+  var down=!f.ok&&(!f.ever_ok||f.age_s>15);
+  if(down&&st.rssi<=st.rssi_weak)return ["bad","Wi-Fi signal is too weak","The radar is on "+st.ssid+" but only just ("+st.rssi+" dBm), so aircraft updates keep failing ("+(f.error||"no reply").toLowerCase()+"). Move it closer to the router or a Wi-Fi extender. Anything better than about -70 dBm works well."+(f.ever_ok?" Last good update "+ago(f.age_s)+".":"")];
+  var weak=st.rssi<=st.rssi_weak?" The Wi-Fi signal is very weak ("+st.rssi+" dBm), so expect dropouts.":"";
+  if(down){
+    var why={"Connect failed":"It couldn't open a secure connection to the aircraft feed. Weak Wi-Fi is the usual cause; a network that blocks devices from the internet is another.",
+      "Timed out":"The aircraft feed took too long to answer. Weak Wi-Fi is the usual cause.",
+      "Rate limited":"The aircraft feed asked the radar to slow down. It will retry by itself.",
+      "Reply cut short":"The download kept breaking off, which points to weak Wi-Fi."}[f.error]
+      ||("The aircraft feed isn't answering properly ("+(f.detail||f.error)+").");
+    return ["bad","No aircraft data: "+(f.error||"no reply").toLowerCase(),why+(f.ever_ok?" Last good update "+ago(f.age_s)+".":" Nothing has arrived since power-on.")]
+  }
+  if(!l.set)return ["warn","Location not set","The radar is still centred on its factory default (Amsterdam). Enter your location below."];
+  var approx=l.approx?" Your location is only an estimate from your internet address, so set it properly below.":"";
+  if(f.shown===0){
+    var bits="The feed is working, but nothing is flying within "+r+" of you at the moment.";
+    if(f.ground>0)bits+=" "+f.ground+" aircraft on the ground "+(f.ground===1?"is":"are")+" hidden.";
+    var wider=settings&&settings.range<settings.ranges_km.length-1;
+    return ["warn","No aircraft in range",bits+(wider?" Try a larger range below.":"")+approx]
+  }
+  var a=st.aircraft[0],near=a?" Nearest is "+(a.cs||"an aircraft")+", "+dist(a.km)+" to the "+compass(a.brg)+".":"";
+  return [l.approx||weak?"warn":"ok",f.shown+" aircraft within "+r,(weak?"Working for now.":"Everything is working.")+near+weak+approx]
+}
+function renderStatus(st){
+  status=st;
+  var portal=st.mode==="portal";
+  document.body.classList.toggle("portal",portal);
+  var chip=$("chip");
+  if(portal){chip.className="chip warn";text(chip,"Setup mode");
+    text($("sub"),st.note||"Choose your Wi-Fi to get started")}
+  else if(st.online){chip.className="chip ok";text(chip,"Online");text($("sub"),st.ssid+" · "+st.ip)}
+  else{chip.className="chip bad";text(chip,"Offline");text($("sub"),"Trying to rejoin "+st.saved_ssid)}
+
+  var v=verdict(st),ve=$("verdict");
+  ve.className="verdict "+v[0];text(ve.children[0],v[1]);text(ve.children[1],v[2]);
+
+  var f=st.feed;
+  text($("s-count"),f.ever_ok?f.shown:"–");
+  text($("s-near"),f.ever_ok&&f.shown?dist(f.nearest_km):"–");
+  text($("s-age"),f.ever_ok?ago(f.age_s).replace(" ago",""):"–");
+  text($("s-rssi"),st.online?st.rssi+" dBm":"–");
+
+  var tb=$("planes").tBodies[0];tb.textContent="";
+  st.aircraft.forEach(function(a){
+    var tr=tb.insertRow();
+    [[a.cs||"–","cs"],[a.t||"–","ty"],[a.alt||"–","al"],[dist(a.km),"r"],[compass(a.brg)+" "+a.brg+"°","r"]].forEach(function(c){
+      var td=tr.insertCell();td.className=c[1];text(td,c[0])})
+  });
+  $("planes").hidden=!st.aircraft.length;
+  var extra=st.aircraft_total-st.aircraft.length;
+  $("more").hidden=extra<=0;
+  if(extra>0)text($("more"),"…and "+extra+" more, further out.");
+
+  var d=$("diag");d.textContent="";
+  [["Source",f.source],["Last reply",f.attempted?(f.http>0?"HTTP "+f.http:"no reply")+(f.error?" · "+f.error:""):"none yet"],
+   ["Detail",f.detail||"–"],["Asked for","everything within "+dist(f.radius_km,0)],
+   ["In the reply",f.reported+" aircraft ("+f.ground+" on ground hidden, "+f.nopos+" without a position)"],
+   ["Download",f.bytes?Math.round(f.bytes/1024*10)/10+" kB in "+f.fetch_ms+" ms":"–"],
+   ["Polls",f.ok_count+" ok, "+f.fail_count+" failed"],
+   ["Wi-Fi",st.online?st.rssi+" dBm received, sending at "+st.tx_dbm+" dBm":"not connected"],
+   ["Free memory",Math.round(st.heap/1024)+" kB (lowest "+Math.round(st.heap_min/1024)+" kB)"],
+   ["Running for",ago(st.uptime_s).replace(" ago","")]].forEach(function(p){
+     var dt=document.createElement("dt"),dd=document.createElement("dd");text(dt,p[0]);text(dd,String(p[1]));d.appendChild(dt);d.appendChild(dd)});
+
+  text($("wifi-now"),st.online?"Connected to "+st.ssid+" ("+st.rssi+" dBm). Pick another network to move the radar."
+    :st.saved_ssid?"Saved network: "+st.saved_ssid+" (not connected right now).":"Choose the Wi-Fi your radar should use. It needs a 2.4 GHz network.");
+  text($("dev-info"),"Firmware "+st.fw+(st.online?" · http://"+st.host+" · http://"+st.ip:""));
+  if(portal&&!$("ssid").value&&st.saved_ssid)$("ssid").value=st.saved_ssid;
+}
+function poll(){
+  clearTimeout(pollTimer);
+  api("/api/status").then(function(st){gone=0;renderStatus(st)},function(){
+    if(++gone>=3){var c=$("chip");c.className="chip bad";text(c,"No reply");
+      text($("sub"),"Can't reach the radar. Is this device on the same Wi-Fi?")}
+  }).then(function(){pollTimer=setTimeout(poll,document.hidden?10000:3000)})
+}
+
+/* ---------- settings form ---------- */
+function rangeLabel(km){
+  return dist(km,0)+" · sees out to about "+dist(km*COVER,0)
+}
+function fillSettings(s){
+  settings=s;locApprox=!!s.loc_approx;
+  $("lat").value=s.loc_set?String(+s.lat.toFixed(5)):"";
+  $("lon").value=s.loc_set?String(+s.lon.toFixed(5)):"";
+  var r=$("range");r.textContent="";
+  s.ranges_km.forEach(function(km,i){var o=new Option(rangeLabel(km),i);r.add(o)});
+  r.value=s.range;
+  var l=$("labels");l.textContent="";
+  for(var i=0;i<=s.labels_max;i++)l.add(new Option(i===0?"None":"Nearest "+i,i));
+  l.value=s.labels;
+  $("units").value=s.miles?1:0;$("source").value=s.source;$("wifipower").value=s.wifi_power;
+  $("runways").checked=s.runways;$("ground").checked=s.ground;$("swap").checked=s.swap_rb;
+  text($("loc-note"),!s.loc_set?"Not set yet. The radar is centred on this spot; a suburb-level position is plenty."
+    :s.loc_approx?"This was estimated from your internet address and may be a long way off. Enter your real location for an accurate picture."
+    :"The radar is centred on this spot. A suburb-level position is plenty.");
+  setDirty(false)
+}
+function setDirty(d){dirty=d;$("savebar").classList.toggle("show",d);if(d)text($("save-msg"),"You have unsaved changes")}
+function loadSettings(){return api("/api/settings").then(fillSettings)}
+function save(){
+  var lat=$("lat").value.trim(),lon=$("lon").value.trim(),body={
+    range:$("range").value,wifi_power:$("wifipower").value,miles:$("units").value,labels:$("labels").value,source:$("source").value,
+    runways:$("runways").checked?1:0,ground:$("ground").checked?1:0,swap_rb:$("swap").checked?1:0};
+  if(lat||lon){body.lat=lat;body.lon=lon;body.loc_approx=locApprox?1:0}
+  $("save").disabled=true;
+  api("/api/settings",body).then(function(s){fillSettings(s);msg("loc-msg","ok","Saved. The radar updates within a few seconds.");poll()},
+    function(e){text($("save-msg"),e.message)}).then(function(){$("save").disabled=false})
+}
+function setLocation(lat,lon,approx){
+  $("lat").value=String(+(+lat).toFixed(5));$("lon").value=String(+(+lon).toFixed(5));locApprox=!!approx;setDirty(true)
+}
+["lat","lon"].forEach(function(id){
+  $(id).addEventListener("input",function(){
+    // "52.37, 4.90" pasted into either box fills both.
+    var m=this.value.match(/^\s*(-?\d+(?:\.\d+)?)\s*[,;\s]\s*(-?\d+(?:\.\d+)?)\s*$/);
+    if(m){$("lat").value=m[1];$("lon").value=m[2]}
+    locApprox=false;setDirty(true)})
+});
+["range","units","labels","source","wifipower","runways","ground","swap"].forEach(function(id){
+  $(id).addEventListener("change",function(){setDirty(true)})});
+$("save").addEventListener("click",save);
+$("discard").addEventListener("click",function(){msg("loc-msg");loadSettings()});
+
+/* ---------- location helpers ---------- */
+$("search-form").addEventListener("submit",function(ev){
+  ev.preventDefault();
+  var q=$("q").value.trim(),list=$("places");
+  if(!q)return;
+  list.textContent="";msg("loc-msg","info","Searching…");
+  fetch("https://geocoding-api.open-meteo.com/v1/search?count=6&language=en&format=json&name="+encodeURIComponent(q))
+   .then(function(r){return r.json()}).then(function(j){
+     var res=j.results||[];
+     if(!res.length){msg("loc-msg","bad","No place called “"+q+"” was found. Try a nearby town.");return}
+     msg("loc-msg");
+     res.forEach(function(p){
+       var li=document.createElement("li"),b=document.createElement("button"),sm=document.createElement("small");
+       b.type="button";text(b,p.name);
+       text(sm,[p.admin1,p.country].filter(Boolean).join(", ")+" · "+p.latitude.toFixed(3)+", "+p.longitude.toFixed(3));
+       b.appendChild(sm);
+       b.addEventListener("click",function(){setLocation(p.latitude,p.longitude,false);list.textContent="";
+         msg("loc-msg","info",p.name+" selected. Press Save to use it.")});
+       li.appendChild(b);list.appendChild(li)})
+   },function(){msg("loc-msg","bad","Place search needs internet on this phone or computer. While you're on the setup network, type the numbers in instead.")})
+});
+$("locate").addEventListener("click",function(){
+  var b=this;b.disabled=true;msg("loc-msg","info","Asking…");
+  api("/api/locate",{go:1}).then(function(j){setLocation(j.lat,j.lon,true);
+    msg("loc-msg","info","Estimated near "+(j.place||"your area")+". This can be a long way off, so check it, then press Save.")},
+    function(e){msg("loc-msg","bad",e.message)}).then(function(){b.disabled=false})
+});
+
+/* ---------- Wi-Fi ---------- */
+function bars(rssi){
+  var n=rssi>=-55?4:rssi>=-67?3:rssi>=-78?2:1,s=document.createElement("span");s.className="bars";
+  s.setAttribute("aria-label","Signal "+n+" of 4");
+  for(var i=1;i<=4;i++){var b=document.createElement("i");if(i<=n)b.className="on";s.appendChild(b)}
+  return s
+}
+function showNets(nets){
+  var ul=$("nets");ul.textContent="";
+  if(!nets.length){msg("wifi-msg","info","No networks found. The radar only sees 2.4 GHz Wi-Fi; move it closer to the router and try again.");return}
+  msg("wifi-msg");
+  nets.forEach(function(n){
+    var li=document.createElement("li"),b=document.createElement("button"),nm=document.createElement("span"),sm=document.createElement("small");
+    b.type="button";b.setAttribute("aria-pressed",$("ssid").value===n.ssid);
+    nm.className="name";text(nm,n.ssid);text(sm,n.open?"open":"");
+    b.appendChild(nm);b.appendChild(sm);b.appendChild(bars(n.rssi));
+    b.addEventListener("click",function(){
+      $("ssid").value=n.ssid;
+      [].forEach.call(ul.querySelectorAll("button"),function(x){x.setAttribute("aria-pressed",x===b)});
+      $("pass").value="";$("pass").focus()});
+    li.appendChild(b);ul.appendChild(li)})
+}
+function scanPoll(tries){
+  api("/api/scan").then(function(j){
+    if(j.state==="done"){$("scan").disabled=false;text($("scan"),"Search again");showNets(j.networks)}
+    else if(tries>25){$("scan").disabled=false;text($("scan"),"Find networks");msg("wifi-msg","bad","The search didn't finish. Try again.")}
+    else scanTimer=setTimeout(function(){scanPoll(tries+1)},700)
+  },function(){
+    // Scanning hops channels, which can drop this page's connection for a moment.
+    if(tries>25){$("scan").disabled=false;text($("scan"),"Find networks")}
+    else scanTimer=setTimeout(function(){scanPoll(tries+1)},1000)})
+}
+function scan(){
+  clearTimeout(scanTimer);$("scan").disabled=true;text($("scan"),"Searching…");msg("wifi-msg");
+  api("/api/scan?start=1").then(function(){scanPoll(0)},function(){scanPoll(0)})
+}
+$("scan").addEventListener("click",scan);
+$("showpass").addEventListener("change",function(){$("pass").type=this.checked?"text":"password"});
+$("wifi-form").addEventListener("submit",function(ev){
+  ev.preventDefault();
+  var ssid=$("ssid").value.trim(),pass=$("pass").value;
+  if(!ssid){msg("wifi-msg","bad","Choose a network or type its name.");$("ssid").focus();return}
+  if(pass&&pass.length<8){msg("wifi-msg","bad","Wi-Fi passwords are at least 8 characters.");$("pass").focus();return}
+  $("join").disabled=true;
+  api("/api/wifi",{ssid:ssid,pass:pass}).then(function(){
+    clearTimeout(pollTimer);
+    msg("wifi-msg","ok","The radar is joining "+ssid+" now. Watch its screen: when it shows Connected, put this phone or computer back on "+ssid+
+      " and open the address it displays (or http://plane-radar.local). If it can't connect, the PlaneRadar-Setup network comes back and you can try again.");
+    setTimeout(function(){$("join").disabled=false;poll()},20000)
+  },function(e){msg("wifi-msg","bad",e.message);$("join").disabled=false})
+});
+
+/* ---------- device ---------- */
+$("restart").addEventListener("click",function(){
+  api("/api/restart",{go:1}).then(function(){msg("dev-msg","info","Restarting. This page reconnects by itself in about 15 seconds.")},
+    function(e){msg("dev-msg","bad",e.message)})
+});
+$("erase").addEventListener("click",function(){
+  var b=this;
+  if(!b.classList.contains("armed")){
+    b.classList.add("armed");text(b,"Tap again to erase");
+    msg("dev-msg","info","This forgets your Wi-Fi, location and settings.");
+    setTimeout(function(){b.classList.remove("armed");text(b,"Erase everything");msg("dev-msg")},6000);return}
+  api("/api/factory-reset",{go:1}).then(function(){msg("dev-msg","info","Erased. The radar restarts in setup mode: join the PlaneRadar-Setup network to start again.")},
+    function(e){msg("dev-msg","bad",e.message)})
+});
+
+document.addEventListener("visibilitychange",function(){if(!document.hidden)poll()});
+loadSettings().then(null,function(){}).then(function(){
+  poll();
+  // In setup mode the list of networks is the first thing anyone needs.
+  api("/api/status").then(function(st){if(st.mode==="portal")scan()},function(){})
+});
+})();
+</script>
+</body>
+</html>
