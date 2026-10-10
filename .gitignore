@@ -8,3 +8,6 @@ sim/out/
 .vscode/launch.json
 .vscode/ipch
 data/portal.html.gz
+media/
+*.mov
+*.MOV

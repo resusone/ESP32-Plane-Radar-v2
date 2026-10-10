@@ -2,6 +2,12 @@
 
 Firmware for an **ESP32-C3 Super Mini** with a **1.28″ round GC9A01** display (240×240): a live ADS-B radar centred on your location. This is a reworked copy of [MatixYo/ESP32-Plane-Radar](https://github.com/MatixYo/ESP32-Plane-Radar) — same hardware and wiring, new Wi-Fi setup, new settings page, and on-screen feed diagnostics.
 
+<p align="center">
+  <img src="docs/plane-radar-timelapse.gif" width="400" alt="Time-lapse of the radar on the round display, tracking about ten aircraft at the 100 km range">
+</p>
+
+Screens rendered by the desktop simulator:
+
 ![Setup and status screens](docs/screens-setup.png)
 ![Radar screens](docs/screens-radar.png)
 
