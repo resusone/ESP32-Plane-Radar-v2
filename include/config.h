@@ -6,7 +6,7 @@
 
 namespace config {
 
-constexpr char kFirmwareVersion[] = "2.0.1";
+constexpr char kFirmwareVersion[] = "2.0.2";
 /** Sent with every outbound HTTP request. adsb.lol rejects the stock
  *  "ESP32HTTPClient" agent with 403, so this must stay a custom string. */
 constexpr char kUserAgent[] = "PlaneRadar/2.0 (ESP32-C3)";
