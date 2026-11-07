@@ -98,6 +98,7 @@ void fillSettings(JsonObject out) {
   out["miles"] = ui::radar::useMiles();
   out["runways"] = ui::radar::showRunways();
   out["ground"] = services::settings::showGround();
+  out["count"] = services::settings::showCount();
   out["source"] = static_cast<uint8_t>(services::settings::feedSource());
   out["labels"] = services::settings::maxLabels();
   out["labels_max"] = services::settings::kMaxLabelsLimit;
@@ -273,6 +274,9 @@ void handleSettingsPost() {
   }
   if (s_server.hasArg("ground")) {
     services::settings::setShowGround(argBool("ground"));
+  }
+  if (s_server.hasArg("count")) {
+    services::settings::setShowCount(argBool("count"));
   }
   if (s_server.hasArg("source")) {
     services::settings::setFeedSource(
